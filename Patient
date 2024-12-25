@@ -1,0 +1,28 @@
+public class Patient {
+    private String id;
+    private String details;
+    private String location;  // New location field
+
+    public Patient(String id, String details, String location) {
+        this.id = id;
+        this.details = details;
+        this.location = location;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    @Override
+    public String toString() {
+        return "ID: " + id + ", Details: " + details + ", Location: " + location;
+    }
+}
