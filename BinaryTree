@@ -1,0 +1,77 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class BinaryTree {
+    private TreeNode root;
+
+    // Constructor
+    public BinaryTree() {
+        this.root = null;
+    }
+
+    // Insert a new therapist into the tree
+    public void insert(Therapist therapist) {
+        root = insertRec(root, therapist);
+    }
+
+    private TreeNode insertRec(TreeNode root, Therapist therapist) {
+        if (root == null) {
+            root = new TreeNode(therapist);
+            return root;
+        }
+        if (therapist.getSpecialization().compareTo(root.therapist.getSpecialization()) < 0) {
+            root.left = insertRec(root.left, therapist);
+        } else if (therapist.getSpecialization().compareTo(root.therapist.getSpecialization()) > 0) {
+            root.right = insertRec(root.right, therapist);
+        }
+        return root;
+    }
+
+    // Method to get all therapists from the tree in an ordered list
+    public List<Therapist> getAllTherapists() {
+        List<Therapist> therapistsList = new ArrayList<>();
+        inOrderTraversalRec(root, therapistsList);
+        return therapistsList;
+    }
+
+    // Helper method to traverse the tree and collect therapists
+    private void inOrderTraversalRec(TreeNode root, List<Therapist> therapistsList) {
+        if (root != null) {
+            inOrderTraversalRec(root.left, therapistsList);  // Traverse left subtree
+            therapistsList.add(root.therapist);               // Add therapist to list
+            inOrderTraversalRec(root.right, therapistsList); // Traverse right subtree
+        }
+    }
+
+    // Method to find therapist by specialization
+    public Therapist findBySpecialization(String specialization) {
+        return findBySpecializationRec(root, specialization);
+    }
+
+    private Therapist findBySpecializationRec(TreeNode root, String specialization) {
+        if (root == null) {
+            return null;
+        }
+        if (specialization.equals(root.therapist.getSpecialization())) {
+            return root.therapist;
+        } else if (specialization.compareTo(root.therapist.getSpecialization()) < 0) {
+            return findBySpecializationRec(root.left, specialization);
+        } else {
+            return findBySpecializationRec(root.right, specialization);
+        }
+    }
+
+    // Traverse the tree and collect therapist information into a StringBuilder (for display)
+    public String inOrderTraversal() {
+        StringBuilder sb = new StringBuilder();
+        inOrderTraversalRec(root, sb);
+        return sb.toString();
+    }
+
+    private void inOrderTraversalRec(TreeNode root, StringBuilder sb) {
+        if (root != null) {
+            inOrderTraversalRec(root.left, sb);  // Traverse left subtree
+            sb.append(root.therapist).append("\n"); // Add therapist to StringBuilder
+            inOrderTraversalRec(root.right, sb);  // Traverse right subtree
+        }
+    }
