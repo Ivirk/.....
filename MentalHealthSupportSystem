@@ -1,0 +1,252 @@
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import java.io.*;
+import java.util.HashMap;
+
+public class MentalHealthSupportSystem extends Application {
+
+    private final BinaryTree therapistTree = new BinaryTree();
+    private final HashMap<String, Patient> patientMap = new HashMap<>();
+    private Therapist selectedTherapist = null; // Store the selected therapist
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Mental Health Support System");
+
+        // Main Layout
+        VBox mainLayout = new VBox(15);
+        mainLayout.setPadding(new Insets(20));
+
+        // Title
+        Label title = new Label("Mental Health Support System");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        mainLayout.getChildren().add(title);
+
+        // Therapist Section
+        VBox therapistSection = new VBox(10);
+        therapistSection.setPadding(new Insets(10));
+        therapistSection.setStyle("-fx-border-color: #ccc; -fx-border-width: 1px; -fx-border-radius: 5px;");
+
+        Label therapistLabel = new Label("Add Therapist");
+        therapistLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        TextField therapistNameField = new TextField();
+        therapistNameField.setPromptText("Therapist Name");
+
+        TextField therapistSpecializationField = new TextField();
+        therapistSpecializationField.setPromptText("Specialization");
+
+        TextField therapistLocationField = new TextField();
+        therapistLocationField.setPromptText("Location");
+
+        Button addTherapistButton = new Button("Add Therapist");
+
+        therapistSection.getChildren().addAll(
+            therapistLabel, therapistNameField, therapistSpecializationField, therapistLocationField, addTherapistButton
+        );
+
+        // Patient Section
+        VBox patientSection = new VBox(10);
+        patientSection.setPadding(new Insets(10));
+        patientSection.setStyle("-fx-border-color: #ccc; -fx-border-width: 1px; -fx-border-radius: 5px;");
+
+        Label patientLabel = new Label("Add Patient");
+        patientLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        TextField patientIdField = new TextField();
+        patientIdField.setPromptText("Patient ID");
+
+        TextField patientDetailsField = new TextField();
+        patientDetailsField.setPromptText("Patient Details");
+
+        TextField patientLocationField = new TextField();
+        patientLocationField.setPromptText("Patient Location");
+
+        Button addPatientButton = new Button("Add Patient");
+
+        patientSection.getChildren().addAll(
+            patientLabel, patientIdField, patientDetailsField, patientLocationField, addPatientButton
+        );
+
+        // ComboBox for selecting therapist
+        ComboBox<Therapist> therapistComboBox = new ComboBox<>();
+        therapistComboBox.setPromptText("Select Therapist");
+
+        // Button Section
+        HBox buttonSection = new HBox(10);
+        buttonSection.setPadding(new Insets(10));
+
+        Button connectButton = new Button("Connect Patient to Therapist");
+        Button displayTherapistsButton = new Button("Display Therapists");
+        Button viewPatientButton = new Button("View Patient Details");
+        Button uploadFileButton = new Button("Upload Therapist Data File");
+
+        buttonSection.getChildren().addAll(connectButton, displayTherapistsButton, viewPatientButton, uploadFileButton);
+
+        // Add all sections to the main layout
+        mainLayout.getChildren().addAll(therapistSection, patientSection, therapistComboBox, buttonSection);
+
+        // Event Handlers
+        addTherapistButton.setOnAction(e -> {
+            String name = therapistNameField.getText();
+            String specialization = therapistSpecializationField.getText();
+            String location = therapistLocationField.getText();
+
+            if (!name.isEmpty() && !specialization.isEmpty() && !location.isEmpty()) {
+                if (therapistTree.findBySpecialization(specialization) != null) {
+                    showErrorMessage("A therapist with this specialization already exists.");
+                } else {
+                    Therapist therapist = new Therapist(name, specialization, location);
+                    therapistTree.insert(therapist);
+                    therapistComboBox.getItems().add(therapist); // Add therapist to ComboBox
+                    showSuccessMessage("Therapist added successfully!");
+                }
+            } else {
+                showErrorMessage("Please fill all fields for the therapist.");
+            }
+        });
+
+        addPatientButton.setOnAction(e -> {
+            String id = patientIdField.getText();
+            String details = patientDetailsField.getText();
+            String location = patientLocationField.getText();
+
+            if (!id.isEmpty() && !details.isEmpty() && !location.isEmpty()) {
+                if (patientMap.containsKey(id)) {
+                    showErrorMessage("A patient with this ID already exists.");
+                } else {
+                    Patient patient = new Patient(id, details, location);
+                    patientMap.put(id, patient);
+                    showSuccessMessage("Patient added successfully!");
+                }
+            } else {
+                showErrorMessage("Please fill all fields for the patient.");
+            }
+        });
+
+        connectButton.setOnAction(e -> {
+            String patientId = patientIdField.getText().trim();
+
+            // Ensure the patient ID is entered
+            if (patientId.isEmpty()) {
+                showErrorMessage("Please specify a patient ID.");
+                return;
+            }
+
+            // Check if the patient exists
+            Patient patient = patientMap.get(patientId);
+            if (patient != null) {
+                // Check if a therapist is selected
+                selectedTherapist = therapistComboBox.getValue();
+                if (selectedTherapist != null) {
+                    // Check if the therapist and patient location match
+                    if (selectedTherapist.getLocation().equals(patient.getLocation())) {
+                        // Connection successful, display a success message
+                        showDetailedMessage("Patient " + patient + " connected to " + selectedTherapist + " successfully!", "Connection Successful");
+                    } else {
+                        // If locations don't match, show an error message
+                        showErrorMessage("The therapist's location does not match the patient's location.");
+                    }
+                } else {
+                    // If no therapist is selected, show an error message
+                    showErrorMessage("No therapist selected to connect with the patient.");
+                }
+            } else {
+                // If patient is not found, show an error message
+                showErrorMessage("No patient found with the given ID.");
+            }
+        });
+
+        displayTherapistsButton.setOnAction(e -> {
+            StringBuilder sb = new StringBuilder("Therapists:\n");
+            sb.append(therapistTree.inOrderTraversal()); // Assuming this method gives a string representation of all therapists
+
+            showDetailedMessage(sb.toString(), "Therapists");
+        });
+
+        viewPatientButton.setOnAction(e -> {
+            String patientId = patientIdField.getText();
+            Patient patient = patientMap.get(patientId);
+
+            if (patient != null) {
+                showDetailedMessage("Patient Details:\n" + patient, "Patient Details");
+            } else {
+                showErrorMessage("No patient found with the given ID.");
+            }
+        });
+
+        uploadFileButton.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            File selectedFile = fileChooser.showOpenDialog(primaryStage);
+
+            if (selectedFile != null) {
+                // Load therapists from the uploaded file
+                loadTherapistDataFromFile(selectedFile, therapistComboBox);
+                showSuccessMessage("File uploaded and therapists loaded successfully.");
+            }
+        });
+
+        // Set Scene and Show Stage
+        Scene scene = new Scene(mainLayout, 700, 600);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void loadTherapistDataFromFile(File file, ComboBox<Therapist> therapistComboBox) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Assuming each line is in the format: name,specialization,location
+                String[] therapistData = line.split(",");
+                if (therapistData.length == 3) {
+                    // Create a new Therapist object and insert it into the tree
+                    Therapist therapist = new Therapist(therapistData[0], therapistData[1], therapistData[2]);
+                    therapistTree.insert(therapist);
+                    therapistComboBox.getItems().add(therapist); // Add therapist to ComboBox
+                }
+            }
+        } catch (IOException e) {
+            showErrorMessage("Failed to load data from the file: " + e.getMessage());
+        }
+    }
+
+    private void showSuccessMessage(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showErrorMessage(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showDetailedMessage(String message, String title) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+
+        TextArea textArea = new TextArea(message);
+        textArea.setWrapText(true);
+        textArea.setEditable(false);
+        textArea.setPrefSize(400, 300);
+
+        alert.getDialogPane().setContent(textArea);
+        alert.showAndWait();
+    }
+}
