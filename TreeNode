@@ -1,0 +1,18 @@
+public class TreeNode {
+    Therapist therapist;
+    TreeNode left, right;
+
+    // Constructor
+    public TreeNode(Therapist therapist) {
+        this.therapist = therapist;
+        this.left = this.right = null;
+    }
+
+    // toString Override
+    @Override
+    public String toString() {
+        return "TreeNode[" +
+                "therapist =" + therapist +
+                ']';
+    }
+}
